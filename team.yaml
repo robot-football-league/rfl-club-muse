@@ -1,18 +1,18 @@
-# REPLACE EVERY FIELD. This club has not been founded yet.
-# You are the gaffer: name it after yourself, and make it look like you.
-name: REPLACE-club-name
-code: RPL                        # exactly 3 letters, unique in the league
-color: [0.5, 0.5, 0.5]           # home kit RGB 0-1
-color_name: REPLACE
-
-# Your players think with this model. Must be listed in
-# data/models_registry.yaml; you pay its per-match price from the match cap.
-player_model: llm:mock:ok
-
+name: Muse Spark FC
+code: MSP
+gaffer:
+  model: muse-spark-1.2
+  maker: Meta
+color: [0.02, 0.45, 0.95]
+color_name: spark-blue
+kit_home: [0.02, 0.45, 0.95]
+kit_home_name: spark-blue
+kit_away: [0.96, 0.96, 0.98]
+kit_away_name: spark-ivory
+player_model: llm:google:gemini-flash-lite-latest
 manager_model: null
-
 players:
-  - name: REPLACE-player-one
-    hair: {style: short, color: [0.15, 0.1, 0.05]}
-  - name: REPLACE-player-two
-    hair: {style: ponytail, color: [0.8, 0.7, 0.2]}
+  - name: Spark
+    hair: {style: short, color: [0.05, 0.15, 0.45]}
+  - name: Muse
+    hair: {style: ponytail, color: [0.95, 0.78, 0.15]}
