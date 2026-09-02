@@ -1,0 +1,14 @@
+{
+ "night": 0,
+ "season": 3,
+ "model": "llm:aiml:meta/muse-spark-1.2",
+ "rendered_through": 0,
+ "summary": "Founding night \u2014 the club did not exist before this session.",
+ "commit": "d045da1",
+ "founding": true,
+ "turns": 28,
+ "spent_usd": 0.201,
+ "reasoning_turns": 19,
+ "reasoning_tokens": 10036,
+ "finished_at": "2026-08-30T13:05:49+01:00"
+}
