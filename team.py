@@ -1,4 +1,4 @@
-"""Muse Spark FC — Muse Spark 1.2 by Meta. Deterministic wrapper + LLM brains + buzzer awareness v2."""
+"""Muse Spark FC — Muse Spark 1.2 by Meta. Deterministic wrapper + LLM brains + buzzer awareness v3 — latency cut."""
 import math
 
 def _dist(a, b):
@@ -33,7 +33,6 @@ class Wrapper:
             if not attack or len(attack) < 2:
                 attack = [7, 0]
             own_x = -attack[0] if attack[0] != 0 else -7
-            # --- time handling (buzzer rule) ---
             ref = obs.get("referee", {})
             t_rem = ref.get("time_remaining_s", None)
             if t_rem is None:
@@ -61,20 +60,16 @@ class Wrapper:
                     return {"skill": "kick_toward", "target_xy": list(attack), "kick_speed_mps": 6.5}
                 else:
                     return {"skill": "kick_toward", "target_xy": [3.0, 0.0], "kick_speed_mps": 6.0}
-            # Emergency defensive clearance: ball in our third and close
             if bxy[0] < -3.5 and bdist < 1.2:
                 return {"skill": "kick_toward", "target_xy": list(attack), "kick_speed_mps": 6.5}
             if buzzer_urgent and bxy[0] < -2.0 and bdist < 3.0:
                 return {"skill": "kick_toward", "target_xy": list(attack), "kick_speed_mps": 6.0}
-            # Wall stuck: controlled release toward center/opponent
             if bwall and bdist < 1.0 and stuck > 1.0:
                 tx = 2.0 if bxy[0] < 0 else attack[0] * 0.5
                 return {"skill": "kick_toward", "target_xy": [tx, 0.0], "kick_speed_mps": 4.5}
-            # Stale ball recovery: split search to avoid both chasing same stale estimate
             if bage > 1.8 and bdist > 1.2:
                 off = 1.5 if self._idx == 0 else -1.5
                 return {"skill": "walk_to", "target_xy": [bxy[0], _clamp(bxy[1]+off, -4.0, 4.0)], "face_xy": list(bxy)}
-            # --- Single-chaser role allocation (fixed) ---
             teammates = det.get("teammates", [])
             tm_dist = None
             txy = None
@@ -88,25 +83,20 @@ class Wrapper:
                         txy = tm["field_xy"]
                         tm_dist = _dist(txy, bxy)
                         break
-            # If we know teammate distance, decide chaser
             if tm_dist is not None:
                 eps = 0.25
-                # teammate clearly closer -> we cover
                 if tm_dist + eps < bdist:
-                    # dynamic cover: if ball in opponent half, hold midfield; if in own half, protect goal
                     if bxy[0] > 1.0:
                         cover_x = _clamp(bxy[0] - 2.5, -1.0, 5.0)
                     else:
                         cover_x = (bxy[0] + own_x) * 0.5
                     cover_y = bxy[1] * 0.4 + (0.8 if self._idx==0 else -0.8)
-                    # keep goal coverage when ball central and deep
                     if bxy[0] < -2.0 and abs(bxy[1]) < 1.5:
                         cover_x = _clamp(own_x + 1.8, -6.5, -2.0)
                         cover_y = _clamp(bxy[1]*0.3, -1.2, 1.2) + (0.5 if self._idx==0 else -0.5)
                     cover_x = _clamp(cover_x, -6.5, 6.5)
                     cover_y = _clamp(cover_y, -4.0, 4.0)
                     return {"skill": "walk_to", "target_xy": [cover_x, cover_y], "face_xy": list(bxy)}
-                # tie -> idx 0 chases, idx 1 covers to avoid double-chase
                 if abs(tm_dist - bdist) <= eps:
                     if self._idx == 1:
                         if bxy[0] > 1.0:
@@ -117,25 +107,19 @@ class Wrapper:
                         cover_x = _clamp(cover_x, -6.5, 6.5)
                         cover_y = _clamp(cover_y, -4.0, 4.0)
                         return {"skill": "walk_to", "target_xy": [cover_x, cover_y], "face_xy": list(bxy)}
-                    # idx 0 continues to chase -> fall through to chase/shoot logic
-            # --- Chaser logic: we are closest (or no teammate info) ---
-            # Opportunistic shot: expanded window, harder kick, corner aim
+            # Chaser: deterministic to cut LLM latency
             if bdist < 1.4 and bxy[0] > 0.5:
-                # aim corners to beat keeper, alternate by idx
                 aim_y = 0.7 if self._idx == 0 else -0.7
                 if abs(bxy[1]) > 2.2:
                     aim_y = 0.0
-                # if very close, shoot hard
                 spd = 7.0 if bdist < 0.9 else 6.2
                 return {"skill": "kick_toward", "target_xy": [attack[0], aim_y], "kick_speed_mps": spd}
-            # If close in opponent half but not quite shot, dribble then shoot: kick toward goal with moderate speed
-            if bdist < 0.9 and bxy[0] > -1.0:
+            if bdist < 1.0:
                 return {"skill": "kick_toward", "target_xy": list(attack), "kick_speed_mps": 5.0}
-            # If ball is in own half and we are chaser but far, intercept via walk_to ball
-            if bdist > 1.5:
-                # intercept: walk directly to ball
+            if bdist > 0.6:
                 return {"skill": "walk_to", "target_xy": list(bxy), "face_xy": list(bxy)}
-            return self._a.decide(obs)
+            # very close but not in shot window: dribble forward
+            return {"skill": "kick_toward", "target_xy": list(attack), "kick_speed_mps": 4.0}
         except Exception:
             try:
                 return self._a.decide(obs)
