@@ -1,0 +1,20 @@
+{
+ "night": 17,
+ "model": "llm:aiml:meta/muse-spark-1.2",
+ "finished_at": "2026-09-12T22:22:03+00:00",
+ "turns": 28,
+ "spent_usd": 0.474,
+ "practices": 0,
+ "reasoning_turns": 12,
+ "fabricated_chars": 0,
+ "reasoning_tokens": 7281,
+ "reports": 0,
+ "wall_s": 161.8,
+ "timed_out": false,
+ "sit_out_rounds": 0,
+ "code_changed": true,
+ "commit": "90510db",
+ "summary": "Muse Spark FC v4: zero-LLM deterministic fast path \u2014 eliminated all LLM calls to cut 13 missed deadlines and 0.9s latency, added local ball-search, buzzer shooting and chaser/cover role allocation",
+ "rendered_through": 31,
+ "season": 3
+}
