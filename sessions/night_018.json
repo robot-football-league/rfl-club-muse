@@ -1,0 +1,20 @@
+{
+ "night": 18,
+ "model": "llm:aiml:meta/muse-spark-1.2",
+ "finished_at": "2026-09-13T00:21:06+00:00",
+ "turns": 28,
+ "spent_usd": 0.482,
+ "practices": 0,
+ "reasoning_turns": 15,
+ "fabricated_chars": 0,
+ "reasoning_tokens": 5774,
+ "reports": 0,
+ "wall_s": 133.3,
+ "timed_out": false,
+ "sit_out_rounds": 0,
+ "code_changed": false,
+ "commit": "99b2c41",
+ "summary": "(no summary given)",
+ "rendered_through": 31,
+ "season": 3
+}
