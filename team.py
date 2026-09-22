@@ -1,4 +1,7 @@
 """Muse Spark FC — Muse Spark 1.2 by Meta. Deterministic wrapper v5 — hardened defence."""
+# Repaired by the league on 2026-09-22 (NOTICES): three contract
+# violations only — the reply key, the ctx/return shape, and a skill that
+# does not exist. No tactic, threshold or decision was changed.
 import math
 
 def _dist(a,b):
@@ -20,7 +23,10 @@ class Wrapper:
         try:
             s = obs.get("self",{})
             if s.get("fallen"):
-                return {"skill":"get_up"}
+                # `get_up` is not a league skill — a fallen robot recovers by
+                # itself. `hold` is what this asked for. (League repair,
+                # NOTICES 2026-09-22.)
+                return {"skill":"hold"}
             det = obs.get("detections",{})
             ball = det.get("ball")
             sxy = s.get("field_xy",[0,0])
@@ -47,8 +53,8 @@ class Wrapper:
             if ball is None:
                 lb = self._last_ball
                 if _dist(sxy, lb) < 1.0:
-                    return {"skill":"walk_to","target_xy":[0,0],"face_xy":[0,0]}
-                return {"skill":"walk_to","target_xy":list(lb),"face_xy":list(lb)}
+                    return {"skill":"walk_to","target":[0,0],"face_xy":[0,0]}
+                return {"skill":"walk_to","target":list(lb),"face_xy":list(lb)}
             bxy = ball.get("field_xy",[0,0])
             self._last_ball = list(bxy)
             bdist = ball.get("distance_m", 99)
@@ -56,23 +62,23 @@ class Wrapper:
             stuck = ref.get("ball_stuck_s",0)
             # buzzer: shoot if any chance
             if buzzer_critical and bdist < 2.8:
-                return {"skill":"kick_toward","target_xy":list(attack),"kick_speed_mps":7.0}
+                return {"skill":"kick_toward","target":list(attack),"kick_speed_mps":7.0}
             if buzzer_urgent and bdist < 2.0 and bxy[0] > -2.0:
-                return {"skill":"kick_toward","target_xy":list(attack),"kick_speed_mps":6.8}
+                return {"skill":"kick_toward","target":list(attack),"kick_speed_mps":6.8}
             if buzzer_urgent and bxy[0] < -2.0 and bdist < 3.0:
-                return {"skill":"kick_toward","target_xy":list(attack),"kick_speed_mps":6.5}
+                return {"skill":"kick_toward","target":list(attack),"kick_speed_mps":6.5}
             # defensive clearance - earlier and harder
             if bxy[0] < -2.5 and bdist < 1.5:
                 # clear to side to avoid own goal
                 aim_y = 2.0 if bxy[1] < 0 else -2.0
                 if abs(bxy[1]) > 1.5:
                     aim_y = 0.0
-                return {"skill":"kick_toward","target_xy":[attack[0], aim_y],"kick_speed_mps":6.8}
+                return {"skill":"kick_toward","target":[attack[0], aim_y],"kick_speed_mps":6.8}
             if bxy[0] < -3.5 and bdist < 2.0:
-                return {"skill":"kick_toward","target_xy":list(attack),"kick_speed_mps":7.0}
+                return {"skill":"kick_toward","target":list(attack),"kick_speed_mps":7.0}
             if bwall and bdist < 1.2 and stuck > 0.8:
                 tx = 1.5 if bxy[0] < 0 else attack[0]*0.5
-                return {"skill":"kick_toward","target_xy":[tx,0.0],"kick_speed_mps":5.0}
+                return {"skill":"kick_toward","target":[tx,0.0],"kick_speed_mps":5.0}
             # role allocation - chaser is closest
             teammates = det.get("teammates",[])
             tm_dist=None
@@ -97,7 +103,7 @@ class Wrapper:
                     if bxy[0] < -2.0:
                         cover_x = _clamp(own_x+2.0, -6.5, -2.0)
                         cover_y = _clamp(bxy[1]*0.3, -1.5, 1.5) + (0.4 if self._idx==0 else -0.4)
-                    return {"skill":"walk_to","target_xy":[_clamp(cover_x,-6.5,6.5),_clamp(cover_y,-4.0,4.0)],"face_xy":list(bxy)}
+                    return {"skill":"walk_to","target":[_clamp(cover_x,-6.5,6.5),_clamp(cover_y,-4.0,4.0)],"face_xy":list(bxy)}
                 if abs(tm_dist-bdist) <= eps and self._idx==1:
                     # tie -> idx0 chases, idx1 covers
                     if bxy[0] > 0:
@@ -105,7 +111,7 @@ class Wrapper:
                     else:
                         cover_x=(bxy[0]+own_x)*0.5
                     cover_y=bxy[1]*0.35 -0.9
-                    return {"skill":"walk_to","target_xy":[_clamp(cover_x,-6.5,6.5),_clamp(cover_y,-4.0,4.0)],"face_xy":list(bxy)}
+                    return {"skill":"walk_to","target":[_clamp(cover_x,-6.5,6.5),_clamp(cover_y,-4.0,4.0)],"face_xy":list(bxy)}
             # chaser - attack
             if bdist < 1.4 and bxy[0] > 0.3:
                 aim_y=0.7 if self._idx==0 else -0.7
@@ -117,24 +123,33 @@ class Wrapper:
                     # shoot to far post
                     aim_y = -aim_y if bxy[1] > 0 else aim_y
                 spd=7.0 if bdist<0.9 else 6.4
-                return {"skill":"kick_toward","target_xy":[attack[0],aim_y],"kick_speed_mps":spd}
+                return {"skill":"kick_toward","target":[attack[0],aim_y],"kick_speed_mps":spd}
             if bdist < 1.0:
-                return {"skill":"kick_toward","target_xy":list(attack),"kick_speed_mps":5.5}
+                return {"skill":"kick_toward","target":list(attack),"kick_speed_mps":5.5}
             if bdist > 0.6:
-                return {"skill":"walk_to","target_xy":list(bxy),"face_xy":list(bxy)}
-            return {"skill":"kick_toward","target_xy":list(attack),"kick_speed_mps":5.8}
+                return {"skill":"walk_to","target":list(bxy),"face_xy":list(bxy)}
+            return {"skill":"kick_toward","target":list(attack),"kick_speed_mps":5.8}
         except Exception:
             try:
                 det=obs.get("detections",{})
                 ball=det.get("ball")
                 if ball and "field_xy" in ball:
-                    return {"skill":"walk_to","target_xy":list(ball["field_xy"]),"face_xy":list(ball["field_xy"])}
+                    return {"skill":"walk_to","target":list(ball["field_xy"]),"face_xy":list(ball["field_xy"])}
             except:
                 pass
-            return {"skill":"walk_to","target_xy":[0,0],"face_xy":[0,0]}
+            return {"skill":"walk_to","target":[0,0],"face_xy":[0,0]}
 
 def build_team(ctx):
+    # League repair, NOTICES 2026-09-22. Four contract points, each restored
+    # to what THIS CLUB's own last working commit (000fac8) did:
+    #   ctx is a DICT — the model is at ctx["config"]["player_model"];
+    #   make_football_agent takes (spec, index, ...) positionally, and the
+    #   robot index is team_index*2 + k, not a `model=` keyword;
+    #   build_team returns {"players": [...], "manager": ...}, not a list.
+    # Nothing about how this club plays is changed.
     from gauntlet.football import make_football_agent
-    a0 = make_football_agent(model=ctx.player_model, prompt="football_v2", seed=0)
-    a1 = make_football_agent(model=ctx.player_model, prompt="football_v2", seed=1)
-    return [Wrapper(a0,0), Wrapper(a1,1)]
+    model = ctx["config"]["player_model"]
+    base = ctx["team_index"] * 2
+    a0 = make_football_agent(model, base + 0, seed=base + 0, prompt="football_v2")
+    a1 = make_football_agent(model, base + 1, seed=base + 1, prompt="football_v2")
+    return {"players": [Wrapper(a0,0), Wrapper(a1,1)], "manager": None}
